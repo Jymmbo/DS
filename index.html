@@ -1,0 +1,47 @@
+<html lang="es">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="http://urkolarraapppiedra.appspot.com/">EUS</a>
+					<a href="http://urkolarraapppiedra.appspot.com/es">ES</a>
+					<a href="http://urkolarraapppiedra.appspot.com/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<form method="post">
+					{% if idioma == "eus" %}
+					<h3>Kaixo mundua!</h3>
+					<div class="linea_formulario" style="margin-right: 150px;">
+						<input name="" type="submit" value="Saioa hasi"/>
+					</div>
+					{% elif idioma == "en" %}
+					<h3>Hello world!</h3>
+					<div class="linea_formulario" style="margin-right: 150px;">
+						<input name="" type="submit" value="Sign in"/>
+					</div>
+					{% elif idioma == "es" %}
+					<h3>Hola mundo!</h3>
+					<div class="linea_formulario" style="margin-right: 150px;">
+						<input name="" type="submit" value="Registrarse"/>
+					</div>
+					{% endif %}
+					</form>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

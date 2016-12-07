@@ -1,0 +1,62 @@
+html {
+	font-size: 100%;
+	background-image: url("fondo2.jpeg");
+}
+
+body {
+  font-family: Verdana, Helvetica, sans-serif;
+  background-color: #DDDDDD;
+}
+
+#contenedor {
+  width: 90%;
+	margin-left: 15px;
+}
+#cabecera {
+	float: left;
+	height: 12%;
+	width: 99%;
+}
+#titulo {
+  float: left;
+  width: 85%;
+}
+#idiomas{
+  float: left;
+  width: 14%;
+}
+
+#contenido {
+  float: left;
+  height: 87%;
+	width: 99%;
+}
+#contenido #menu {
+  float: left;
+  width: 20%;
+}
+#contenido #principal{
+  float: left;
+  width: 79%;
+}
+
+.linea_formulario {
+	clear: both;
+	margin: 5px 0;
+	color: #000000;
+	font-family: Verdana, Helvetica, Arial;
+	font-size: 15px;
+	font-weight: normal;
+	text-decoration: none;
+}
+
+.label {
+  width: 16%;
+  float: left;
+	text-align: right;
+	padding-right: 10px;
+}
+
+.label_error {
+	text-align: left;
+}

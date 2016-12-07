@@ -1,0 +1,91 @@
+<html lang="es">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<scipt src="http://code.jquery.com/jquery-2.1.1.min.js"></scipt>
+		<scipt src="js/jquery.validate.js"></scipt>
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="http://urkolarraapppiedra.appspot.com/">EUS</a>
+					<a href="http://urkolarraapppiedra.appspot.com/es">ES</a>
+					<a href="http://urkolarraapppiedra.appspot.com/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<h3>{{msgRellene}}</h3>
+					<form action="" method="" id="registroForm" name="" onsubmit="return validarFormulario ()">
+						<div class="linea_formulario">
+							<label for="username" class="label">{{msgNomUser}}</label>
+							<input id="username" class="input" type="text"/>
+						</div>
+						<div class="linea_formulario">
+							<label for="password" class="label">{{msgPass}}</label>
+							<input id="password" class="input" type="password"/>
+							</div>
+						<div class="linea_formulario">
+							<label for="passwordrep" class="label">{{msgPassRep}}</label>
+							<input id="passwordrep" class="input" type="password"/>
+							</div>
+						<div class="linea_formulario">
+							<label for="email" class="label">{{msgEmail}}</label>
+							<input id="email" class="input" type="email"/>
+							</div>
+						<div class="linea_formulario" style="margin-right: 150px;">
+							<br><input name="" type="submit" value="{{msgButEnviar}}"/>
+						</div>
+						<div id="msgCorrecto" class="linea_formulario" style="visibility: hidden;">
+							<h3><label id="txtkaixo">{{msgHola}} <span id="userCorrecto"></span></label></h3>
+							<h3><label id="mensajeDatCorrecto">{{msgDatosOK}}</label></h3>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<script>
+			$("#commentForm").validate();
+		</script>
+		<script type="text/javascript">
+			$().ready(function) {
+				$("#registroForm").validate({
+					rules: {
+						username: "required",
+						password: "required",
+						passwordrep: {
+							required: true,
+							equalTo: "#password"
+						},
+						email: {
+							required: true,
+							email: true
+						}
+					},
+					messages: {
+						username: "AAAAAAA",
+						password: "BBBBBBB",
+						passwordrep: {
+							required: "CCCCCCCCCC",
+							equalTo: "DDDDDDDDDDD"
+						},
+						email: {
+							required: "EEEEEEEE",
+							email: "FFFFFFFFFFFFF"
+						}
+					}
+					
+				});
+			}
+		</script>
+	</body>
+</html>
