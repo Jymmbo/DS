@@ -1,0 +1,81 @@
+<html lang="es">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="js/jquery.validate.js"></script>
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="/">EUS</a>
+					<a href="/es">ES</a>
+					<a href="/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<table>
+						{% for user in listausers %}
+						<tr>
+							<td>{{user.nombre}}</td>
+							<td>{{user.email}}</td>
+							<td>{{user.created}}</td>
+							<td><img src="data:;base64,{{ user.foto }}"/></td>
+						</tr>
+						{% endfor %}
+					</table>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			function validarFormulario() {
+				var userName = document.getElementById("username").value;
+				password = document.getElementById("password").value;
+				passwordRep = document.getElementById("passwordrep").value;
+				email = document.getElementById("email").value;
+				emailRegex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+				valorReturn = true;
+				document.getElementById("msgCorrecto").style.visibility = "hidden";
+  				if (userName == null || userName.length == 0){
+    				document.getElementById("usernameError").style.visibility = "visible";
+					valorReturn = false;
+  				}else{
+					document.getElementById("usernameError").style.visibility = "hidden";
+				}
+  				if (password == null || password.length == 0){
+    				document.getElementById("passwordError").style.visibility = "visible";
+					valorReturn = false;
+  				}else{
+					document.getElementById("passwordError").style.visibility = "hidden";
+				}
+				if(passwordRep == null || passwordRep.length == 0 || password != passwordRep){
+					document.getElementById("passwordRepError").style.visibility = "visible";
+					valorReturn = false;
+				}else{
+					document.getElementById("passwordRepError").style.visibility = "hidden";
+				}
+				if(email == null || email.length == 0 || !emailRegex.test(email)){
+					document.getElementById("emailError").style.visibility = "visible";
+					valorReturn = false;
+				}else{
+					document.getElementById("emailError").style.visibility = "hidden";
+				}
+				if(valorReturn){
+					document.getElementById("msgCorrecto").style.visibility = "visible";
+					document.getElementById('userCorrecto').innerHTML = userName;
+				}
+				return false;
+			}
+		</script>
+	</body>
+</html>

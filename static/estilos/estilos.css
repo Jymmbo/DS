@@ -8,6 +8,19 @@ body {
   background-color: #DDDDDD;
 }
 
+table {
+	border-collapse: collapse;
+	border: orange 2px solid;
+}
+
+td {
+	border: orange 2px solid;
+}
+
+tr {
+	border: orange 2px solid;
+}
+
 #contenedor {
   width: 90%;
 	margin-left: 15px;

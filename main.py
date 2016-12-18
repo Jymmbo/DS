@@ -20,7 +20,10 @@ import re
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.api import images
+from base64 import b64encode
 
+import json
 import jinja2
 import webapp2
 
@@ -42,6 +45,7 @@ class MainHandler(webapp2.RequestHandler):
 						  'msgPass': 'Pasahitza',
 						   'msgPassRep': 'Errepikatu pasahitza',
 						   'msgEmail': 'Email-a',
+						   'msgAvatar': 'Zure irudia',
 						   'msgButEnviar': 'Bidali'}
 		template = JINJA_ENVIRONMENT.get_template('registro.html')
 		self.response.write(template.render(template_values))
@@ -59,6 +63,7 @@ class MainHandlerEs(webapp2.RequestHandler):
 						  'msgPass': 'Password',
 						   'msgPassRep': 'Repetir password',
 						   'msgEmail': 'Email',
+						   'msgAvatar': 'Foto',
 						   'msgButEnviar': 'Enviar'}
 		template = JINJA_ENVIRONMENT.get_template('registroes.html')
 		self.response.write(template.render(template_values))
@@ -76,6 +81,7 @@ class MainHandlerEn(webapp2.RequestHandler):
 						  'msgPass': 'Password',
 						   'msgPassRep': 'Repeat password',
 						   'msgEmail': 'Email',
+						   'msgAvatar': 'Photo',
 						   'msgButEnviar': 'Submit'}
 		template = JINJA_ENVIRONMENT.get_template('registroen.html')
 		self.response.write(template.render(template_values))
@@ -83,7 +89,14 @@ class MainHandlerEn(webapp2.RequestHandler):
 
 class Registrarse(webapp2.RequestHandler):
 	def get(self):
-		template_values = { }
+		template_values = { 'idioma': 'eus',
+						   'msgRellene': 'Bete eremuak, mesedez:',
+						  'msgNomUser': 'Erabiltzailea',
+						  'msgPass': 'Pasahitza',
+						   'msgPassRep': 'Errepikatu pasahitza',
+						   'msgEmail': 'Email-a',
+						   'msgAvatar': 'Zure irudia',
+						   'msgButEnviar': 'Bidali'}
 		template = JINJA_ENVIRONMENT.get_template('registro.html')
 		self.response.write(template.render(template_values))
 	
@@ -123,10 +136,13 @@ class Registrarse(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "Dagoeneko bada email hori duen erabiltzaile bat"
 			else:
+				avatar = self.request.get('imagen')
+				avatar = images.resize(avatar, 150, 150)
 				datos = User()
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
+				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "ZORIONAK! "  + nombre + ", zure erabiltzailea ongi gorde dugu"
 
@@ -140,6 +156,7 @@ class Registrarse(webapp2.RequestHandler):
 						  'msgPass': 'Pasahitza',
 						   'msgPassRep': 'Errepikatu pasahitza',
 						   'msgEmail': 'Email-a',
+						   'msgAvatar': 'Zure irudia',
 						   'msgButEnviar': 'Bidali',
 						  'msgHola': 'Kaixo',
 						  'msgDatosOK': 'Zure datuak ongi daude',
@@ -153,7 +170,14 @@ class Registrarse(webapp2.RequestHandler):
 
 class RegistrarseEs(webapp2.RequestHandler):
 	def get(self):
-		template_values = { }
+		template_values = { 'idioma': 'es',
+						   'msgRellene': 'Rellene los campos, por favor:',
+						  'msgNomUser': 'Nombre de usuario',
+						  'msgPass': 'Password',
+						   'msgPassRep': 'Repetir password',
+						   'msgEmail': 'Email',
+						   'msgAvatar': 'Foto',
+						   'msgButEnviar': 'Enviar'}
 		template = JINJA_ENVIRONMENT.get_template('registroes.html')
 		self.response.write(template.render(template_values))
 	
@@ -193,14 +217,17 @@ class RegistrarseEs(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "Ya existe un usuario con ese email"
 			else:
+				avatar = self.request.get('imagen')
+				avatar = images.resize(avatar, 150, 150)
 				datos = User()
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
+				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "FELICIDADES! "  + nombre + ", tu usuario se ha guardado correctamente"
 
-		template_values = { 'idioma': 'eus',
+		template_values = { 'idioma': 'es',
 							'username': nombre,
 							'password': password,
 							'passwordRep': passwordRep,
@@ -210,9 +237,10 @@ class RegistrarseEs(webapp2.RequestHandler):
 						   'msgPass': 'Password',
 						   'msgPassRep': 'Repetir password',
 						   'msgEmail': 'Email',
+						   'msgAvatar': 'Foto',
 						   'msgButEnviar': 'Enviar',
-						   'msgHola': 'Kaixo',
-						  'msgDatosOK': 'Zure datuak ongi daude',
+						   'msgHola': 'Hola',
+						  'msgDatosOK': 'Tus datos son correctos',
 						  'msgNomUserE': msgUserError,
 						  'msgPassE': msgPassError,
 						   'msgPassRepE': msgPass2Error,
@@ -223,7 +251,14 @@ class RegistrarseEs(webapp2.RequestHandler):
 
 class RegistrarseEn(webapp2.RequestHandler):
 	def get(self):
-		template_values = { }
+		template_values = { 'idioma': 'en',
+						   'msgRellene': 'Fill in the gaps, please:',
+						  'msgNomUser': 'User',
+						  'msgPass': 'Password',
+						   'msgPassRep': 'Repeat password',
+						   'msgEmail': 'Email',
+						   'msgAvatar': 'Photo',
+						   'msgButEnviar': 'Submit'}
 		template = JINJA_ENVIRONMENT.get_template('registroen.html')
 		self.response.write(template.render(template_values))
 	
@@ -263,14 +298,17 @@ class RegistrarseEn(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "A user with that email already exists"
 			else:
+				avatar = self.request.get('imagen')
+				avatar = images.resize(avatar, 150, 150)
 				datos = User()
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
+				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "CONGRATULATIONS! "  + nombre + ", your user has been successfully saved"
 
-		template_values = { 'idioma': 'eus',
+		template_values = { 'idioma': 'en',
 							'username': nombre,
 							'password': password,
 							'passwordRep': passwordRep,
@@ -280,6 +318,7 @@ class RegistrarseEn(webapp2.RequestHandler):
 						  'msgPass': 'Password',
 						   'msgPassRep': 'Repeat password',
 						   'msgEmail': 'Email',
+						   'msgAvatar': 'Photo',
 						   'msgButEnviar': 'Submit',
 						   'msgHola': 'Hello',
 						  'msgDatosOK': 'Your data are well',
@@ -291,12 +330,61 @@ class RegistrarseEn(webapp2.RequestHandler):
 		template = JINJA_ENVIRONMENT.get_template('registroen.html')
 		self.response.write(template.render(template_values))
 
+class VerUsuarios(webapp2.RequestHandler):
+	def get(self):
+		listausuarios = User.query()
+		for user in listausuarios:
+			image = b64encode(user.foto)
+			user.foto = image
+		listausuarios = User.query()
+		template_values = {'idioma': 'eus',
+						   'listausers': listausuarios}
+		template = JINJA_ENVIRONMENT.get_template('listausuarios.html')
+		self.response.write(template.render(template_values))
+
+class VerUsuariosEs(webapp2.RequestHandler):
+	def get(self):
+		listausuarios = User.query()
+		for user in listausuarios:
+			image = b64encode(user.foto)
+			user.foto = image
+		listausuarios = User.query()
+		template_values = {'idioma': 'es',
+						   'listausers': listausuarios}
+		template = JINJA_ENVIRONMENT.get_template('listausuarios.html')
+		self.response.write(template.render(template_values))
+
+class VerUsuariosEn(webapp2.RequestHandler):
+	def get(self):
+		listausuarios = User.query()
+		for user in listausuarios:
+			image = b64encode(user.foto)
+			user.foto = image
+		listausuarios = User.query()
+		template_values = {'idioma': 'en',
+						   'listausers': listausuarios}
+		template = JINJA_ENVIRONMENT.get_template('listausuarios.html')
+		self.response.write(template.render(template_values))
+
 class User(ndb.Model):
 	nombre = ndb.StringProperty(required=True)
 	email = ndb.StringProperty(required=True)
 	password = ndb.StringProperty(required=True)
+	foto = ndb.BlobProperty()
 	created=ndb.DateTimeProperty(auto_now_add=True)
 
+class ValidarEmail(webapp2.RequestHandler):
+	def get(self):
+		mensajeValidacionEmail = ""
+		codigoValidacion = ""
+		email = self.request.get('email')
+		nusersemail = User.query(User.email==email).count()
+		if (nusersemail==1):
+			codigoValidacion = "0"
+		else:
+			codigoValidacion = "1"
+		
+		self.response.out.write("%s" %(codigoValidacion))
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
@@ -305,4 +393,8 @@ app = webapp2.WSGIApplication([
 		('/registro', Registrarse),
 		('/registroes', RegistrarseEs),
 		('/registroen', RegistrarseEn),
+		('/verusuarios', VerUsuarios),
+		('/verusuarioses', VerUsuariosEs),
+		('/verusuariosen', VerUsuariosEn),
+		('/validaremail', ValidarEmail),
 ], debug=True)

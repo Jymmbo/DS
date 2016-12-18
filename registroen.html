@@ -1,8 +1,8 @@
 <html lang="es">
 	<head>
 		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
-		<scipt src="http://code.jquery.com/jquery-2.1.1.min.js"></scipt>
-		<scipt src="js/jquery.validate.js"></scipt>
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="js/jquery.validate.js"></script>
 		<meta charset="utf-8"/>
 		<title>DSSW Urko - Master SIA</title>
 	</head>
@@ -25,7 +25,7 @@
 				</div>
 				<div id="principal">
 					<h3>{{msgRellene}}</h3>
-					<form action="/registroen" method="post" id="" name="" onsubmit="">
+					<form action="/registroen" method="post" id="" name="" onsubmit="" enctype="multipart/form-data">
 						<div class="linea_formulario">
 							<label for="username" class="label">{{msgNomUser}}</label>
 							<input id="username" name="username" class="input" type="text" value="{{username}}"/>
@@ -43,8 +43,12 @@
 						</div>
 						<div class="linea_formulario">
 							<label for="email" class="label">{{msgEmail}}</label>
-							<input id="email" name="email" class="input" type="text" value="{{email}}"/>
+							<input id="email" name="email" class="input" type="text" value="{{email}}" onchange="validaremail()"/>
 							<label id="emailError" class="label_error" style="visibility: visible; color:red">{{msgEmailE}}</label>
+						</div>
+						<div class="linea_formulario">
+							<label for="email" class="label">{{msgAvatar}}</label>
+							<input id="imagen" name="imagen" type="file" value="Insertar foto"/>
 						</div>
 						<div class="linea_formulario" style="margin-right: 150px;">
 							<br><input name="" type="submit" value="{{msgButEnviar}}"/>
@@ -60,6 +64,25 @@
 				</div>
 			</div>
 		</div>
+		<script>
+			var v=setInterval(function(){pedirhora()},2000);
+			function validaremail(){
+				$.ajax("/validaremail", 
+					   { "type": "get",   // usualmente post o get
+						"success": function(result) {
+							document.getElementById("emailError").style.visibility = "visible";
+							if(result==1){
+								document.getElementById('emailError').innerHTML = "Correct email";
+								document.getElementById('emailError').style.color = "green";
+							}else{
+								document.getElementById('emailError').innerHTML = "Email already used";
+								document.getElementById('emailError').style.color = "red";
+							}
+						},
+						"error": function(result) {
+							alert("Error in email validation. Continue!")},
+						"async": true,})};
+		</script>
 		<script type="text/javascript">
 			function validarFormulario() {
 				var userName = document.getElementById("username").value;
