@@ -105,6 +105,7 @@ class Registrarse(webapp2.RequestHandler):
 		password=self.request.get('password')
 		passwordRep=self.request.get('passwordrep')
 		email=self.request.get('email')
+		avatar = self.request.get('imagen')
 		msgUserError = ""
 		msgPassError = ""
 		msgPass2Error = ""
@@ -136,13 +137,16 @@ class Registrarse(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "Dagoeneko bada email hori duen erabiltzaile bat"
 			else:
-				avatar = self.request.get('imagen')
-				avatar = images.resize(avatar, 150, 150)
 				datos = User()
+				try:
+					avatar = images.resize(avatar, 150, 150)
+					datos.foto = avatar
+				except:
+					count = 0
+				
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
-				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "ZORIONAK! "  + nombre + ", zure erabiltzailea ongi gorde dugu"
 
@@ -151,6 +155,7 @@ class Registrarse(webapp2.RequestHandler):
 							'password': password,
 							'passwordRep': passwordRep,
 							'email': email,
+						   'imagen': avatar,
 						   'msgRellene': 'Bete eremuak, mesedez:',
 						  'msgNomUser': 'Erabiltzailea',
 						  'msgPass': 'Pasahitza',
@@ -186,6 +191,7 @@ class RegistrarseEs(webapp2.RequestHandler):
 		password=self.request.get('password')
 		passwordRep=self.request.get('passwordrep')
 		email=self.request.get('email')
+		avatar = self.request.get('imagen')
 		msgUserError = ""
 		msgPassError = ""
 		msgPass2Error = ""
@@ -217,13 +223,16 @@ class RegistrarseEs(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "Ya existe un usuario con ese email"
 			else:
-				avatar = self.request.get('imagen')
-				avatar = images.resize(avatar, 150, 150)
 				datos = User()
+				try:
+					avatar = images.resize(avatar, 150, 150)
+					datos.foto = avatar
+				except:
+					count = 0
+				
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
-				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "FELICIDADES! "  + nombre + ", tu usuario se ha guardado correctamente"
 
@@ -232,6 +241,7 @@ class RegistrarseEs(webapp2.RequestHandler):
 							'password': password,
 							'passwordRep': passwordRep,
 							'email': email,
+						   'imagen': avatar,
 						   'msgRellene': 'Rellene los campos, por favor:',
 						   'msgNomUser': 'Nombre de usuario',
 						   'msgPass': 'Password',
@@ -267,6 +277,7 @@ class RegistrarseEn(webapp2.RequestHandler):
 		password=self.request.get('password')
 		passwordRep=self.request.get('passwordrep')
 		email=self.request.get('email')
+		avatar = self.request.get('imagen')
 		msgUserError = ""
 		msgPassError = ""
 		msgPass2Error = ""
@@ -298,13 +309,16 @@ class RegistrarseEn(webapp2.RequestHandler):
 			elif (nusersemail==1):
 				msgEmailError = "A user with that email already exists"
 			else:
-				avatar = self.request.get('imagen')
-				avatar = images.resize(avatar, 150, 150)
 				datos = User()
+				try:
+					avatar = images.resize(avatar, 150, 150)
+					datos.foto = avatar
+				except:
+					count = 0
+				
 				datos.nombre = nombre
 				datos.password = password
 				datos.email = email
-				datos.foto = avatar
 				datos.put()
 				msgCorrectoAlmacenado = "CONGRATULATIONS! "  + nombre + ", your user has been successfully saved"
 
@@ -313,6 +327,7 @@ class RegistrarseEn(webapp2.RequestHandler):
 							'password': password,
 							'passwordRep': passwordRep,
 							'email': email,
+						   'imagen': avatar,
 						   'msgRellene': 'Fill in the gaps, please:',
 						  'msgNomUser': 'User',
 						  'msgPass': 'Password',
@@ -334,8 +349,12 @@ class VerUsuarios(webapp2.RequestHandler):
 	def get(self):
 		listausuarios = User.query()
 		for user in listausuarios:
-			image = b64encode(user.foto)
-			user.foto = image
+			try:
+				image = b64encode(user.foto)
+				user.foto = image
+			except Exception:
+				count = 0
+			
 		listausuarios = User.query()
 		template_values = {'idioma': 'eus',
 						   'listausers': listausuarios}
@@ -346,8 +365,12 @@ class VerUsuariosEs(webapp2.RequestHandler):
 	def get(self):
 		listausuarios = User.query()
 		for user in listausuarios:
-			image = b64encode(user.foto)
-			user.foto = image
+			try:
+				image = b64encode(user.foto)
+				user.foto = image
+			except Exception:
+				count = 0
+			
 		listausuarios = User.query()
 		template_values = {'idioma': 'es',
 						   'listausers': listausuarios}
@@ -358,8 +381,12 @@ class VerUsuariosEn(webapp2.RequestHandler):
 	def get(self):
 		listausuarios = User.query()
 		for user in listausuarios:
-			image = b64encode(user.foto)
-			user.foto = image
+			try:
+				image = b64encode(user.foto)
+				user.foto = image
+			except Exception:
+				count = 0
+			
 		listausuarios = User.query()
 		template_values = {'idioma': 'en',
 						   'listausers': listausuarios}
@@ -370,12 +397,11 @@ class User(ndb.Model):
 	nombre = ndb.StringProperty(required=True)
 	email = ndb.StringProperty(required=True)
 	password = ndb.StringProperty(required=True)
-	foto = ndb.BlobProperty()
+	foto = ndb.BlobProperty(required=False)
 	created=ndb.DateTimeProperty(auto_now_add=True)
 
 class ValidarEmail(webapp2.RequestHandler):
 	def get(self):
-		mensajeValidacionEmail = ""
 		codigoValidacion = ""
 		email = self.request.get('email')
 		nusersemail = User.query(User.email==email).count()
@@ -385,6 +411,35 @@ class ValidarEmail(webapp2.RequestHandler):
 			codigoValidacion = "1"
 		
 		self.response.out.write("%s" %(codigoValidacion))
+
+# Las tares 5.1, 5.2, 6 y 7 solo van en castellano
+
+class Geolocalizacion(webapp2.RequestHandler):
+	def get(self):
+		template_values = {'msgDireccion': 'Direccion:',
+						   'msgDireccionE': 'Direccion incorrecta'}
+		template = JINJA_ENVIRONMENT.get_template('geolocalizacion.html')
+		self.response.write(template.render(template_values))
+
+class Mostrarmapa(webapp2.RequestHandler):
+	def get(self):
+		serviceurl = 'http://maps.googleapis.com/maps/api/geocode/json?'
+		address=self.request.get('dir')
+		url = serviceurl + urllib.urlencode({'address': address})
+		uh = urllib.urlopen(url)
+		data = uh.read()
+		
+		js = json.loads(str(data))
+		lat = js['results'][0]['geometry']['location']['lat']
+		lng = js['results'][0]['geometry']['location']['lng']
+		
+		self.response.out.write("%s,%s"%(lat,lng))
+
+class Autenticacion(webapp2.RequestHandler):
+	def get(self):
+		template_values = {}
+		template = JINJA_ENVIRONMENT.get_template('autenticacion.html')
+		self.response.write(template.render(template_values))
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
@@ -397,4 +452,9 @@ app = webapp2.WSGIApplication([
 		('/verusuarioses', VerUsuariosEs),
 		('/verusuariosen', VerUsuariosEn),
 		('/validaremail', ValidarEmail),
+		('/datos', Geolocalizacion),
+		('/mapa', Mostrarmapa),
+		('/autenticacion', Autenticacion),
+		('/accesologin', ValidarEmail),
+		('/sss', ValidarEmail),
 ], debug=True)

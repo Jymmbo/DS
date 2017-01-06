@@ -52,6 +52,9 @@ tr {
   float: left;
   width: 79%;
 }
+#map {
+        height: 100%;
+}
 
 .linea_formulario {
 	clear: both;

@@ -1,0 +1,88 @@
+<html lang="es">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="js/jquery.validate.js"></script>
+		<meta name="viewport" content="initial-scale=1.0">
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="/">EUS</a>
+					<a href="/es">ES</a>
+					<a href="/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<form action="/mapa" method="post" id="" name="" onsubmit="">
+						<div class="linea_formulario">
+							<label for="direccion" class="label">{{msgDireccion}}</label>
+							<input id="direccion" name="direccion" class="input" type="text" value="{{direccion}}" onchange="obtenercoords(this.value)"/>
+							<label id="direccionError" class="label_error" style="visibility: hidden; color:red;">{{msgDireccionE}}</label>
+						</div>
+					</form>
+					<div id="map"></div>
+				</div>
+			</div>
+		</div>
+		<script>
+			function obtenercoords(direccion){
+				direccionRegex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+				if(direccion != null & direccion.length != 0){
+					$.ajax("/mapa", 
+					   { "type": "get",// usualmente post o get
+						data: "dir="+direccion,
+						beforeSend:function(){
+							document.getElementById("direccionError").style.visibility = "visible";
+							document.getElementById('direccionError').innerHTML = "Validando direccion...";
+							document.getElementById('direccionError').style.color = "black";
+						},
+						"success": function(result) {
+							document.getElementById("direccionError").style.visibility = "visible";
+							var res = result.split(",");
+							initMap(res[0], res[1]);
+							document.getElementById('direccionError').style.color = "green";
+						},
+						"error": function(result) {
+							document.getElementById("direccionError").style.visibility = "visible";
+							document.getElementById('direccionError').innerHTML = "Ha ocurrido un error durante el proceso de obtencion de coordenadas";
+							document.getElementById('direccionError').style.color = "red";},
+						"async": true,})
+				}else{
+					document.getElementById("direccionError").style.visibility = "visible";
+					document.getElementById('direccionError').innerHTML = "La direccion no tiene un formato correcto";
+					document.getElementById('direccionError').style.color = "red";
+				}
+			};
+		</script>
+		<script>
+			var map;
+			function initMap(lat, lng) {
+				if(lat != null && lat.length != 0 && lng != null && lng.length != 0){	
+					document.getElementById("map").style.visibility = "visible";
+					map = new google.maps.Map(document.getElementById('map'), {
+						center: {lat: lat, lng: lng},
+						zoom: 8
+					});
+				}else{
+					document.getElementById("map").style.visibility = "hidden";
+				}
+			}
+		</script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMPTxaM2Ncx8lT2Ns42lwKbweYAtSkhyM&callback=initMap"
+        	async defer>
+		</script>
+
+	</body>
+</html>
