@@ -22,6 +22,10 @@ import hashlib, uuid
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.api import images
+from google.appengine.ext import webapp
+from google.appengine.ext import blobstore
+from google.appengine.ext import db
+from google.appengine.ext.webapp import blobstore_handlers
 from base64 import b64encode
 
 import json
@@ -459,10 +463,15 @@ class Image(ndb.Model):
 	public = ndb.BooleanProperty()
 	blob_key = ndb.BlobKeyProperty()
 
-#session_module.BaseSessionHandler
-class AccesoLogin(webapp2.RequestHandler):
+# Primera clase en la que miramos si el usuario esta logeado
+class AccesoLogin(session_module.BaseSessionHandler):
 	def get(self):
-		template_values = {}
+		registrado = "0"
+		if self.session.get('registrado'):
+			#Como esta registrado, le ponemos valor 1
+			registrado = "1"
+
+		template_values = {'registrado': registrado}
 		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		self.response.write(template.render(template_values))
 
@@ -549,10 +558,11 @@ class RegistrarseEs2(webapp2.RequestHandler):
 						   'msgPassRepE': msgPass2Error,
 						   'msgEmailE': msgEmailError,
 						   'msgCorrectoAlmacenado': msgCorrectoAlmacenado}
-		template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
+		#template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
+		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		self.response.write(template.render(template_values))
 
-class Login(webapp2.RequestHandler):
+class Login(session_module.BaseSessionHandler):
 	def get(self):
 		template_values = { 'idioma': 'es',
 						   'msgRellene': 'Rellene los campos, por favor:'}
@@ -584,14 +594,42 @@ class Login(webapp2.RequestHandler):
 				if not pass_bbdd==pass_login:
 					errorVal = True
 					#msgError = "3 " + pass_bbdd + "-----" + pass_login + "-----" + password + "-----" + salt
+					#Controlamos el numero de intentos que lleva el usuario
+					intentos = 0
+					if self.session.get('usuariologeando'):
+						usuariolog = self.session.get('usuariologeando')
+						if(usuariolog==email):
+							if self.session.get('intentos'):
+								intentos = self.session.get('intentos')
+								self.session['intentos'] = intentos + 1
+							else:
+								self.session['intentos'] = 1
+						else:
+							self.session['usuariologeando'] = email
+							self.session['intentos'] = 1
+					else:
+						self.session['usuariologeando'] = email
+						self.session['intentos'] = 1
+					
+					if(intentos>=3):
+						msgError = "Su cuenta ha sido bloqueada. No ha conseguido loguearse en tres ocasiones"
+						#Codigo de eliminar la cuenta
+						users = Usuarios.query(Usuarios.email==email)
+						for l in users.fetch(limit = 1):
+							l.key.delete()
+				
+				else:
+					#Indicamos en session que esta registrado
+					self.session['registrado'] = "1"
 			else:
 				errorVal = True
-			
 
 		if not errorVal:
 			msgError = "LOGUEADOooooooooooooooooooooooooooooooo"
+			template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		else:
 			msgError = msgError + " El inicio de sesion ha fallado. Hay elementos incorrectos"
+			template = JINJA_ENVIRONMENT.get_template('login.html')
 			
 		template_values = { 'idioma': 'es',
 							'password': password,
@@ -600,50 +638,121 @@ class Login(webapp2.RequestHandler):
 						   'msgPass': 'Password',
 						   'msgEmail': 'Email',
 						   'msgButEnviar': 'Enviar',
+						   'registrado': self.session.get('registrado'),
 						  'msgError': msgError}
-		template = JINJA_ENVIRONMENT.get_template('login.html')
+		#template = JINJA_ENVIRONMENT.get_template('login.html')
 		self.response.write(template.render(template_values))
 
-class Logout(webapp2.RequestHandler):
+class Logout(session_module.BaseSessionHandler):
 	def get(self):
-		template_values = { 'idioma': 'es',
-						   'msgRellene': 'Rellene los campos, por favor:'}
-		template = JINJA_ENVIRONMENT.get_template('login.html')
+		del self.session['registrado']
+		del self.session['usuariologeando']
+		template_values = { }
+		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
+		self.response.write(template.render(template_values))
+
+class AddFoto2(blobstore_handlers.BlobstoreUploadHandler, session_module.BaseSessionHandler):
+	def get(self):
+		FORM_SUBIR_FOTO="""
+		<html><body>
+		<form action="%(url)s" method="POST" enctype="multipart/form-data">
+		<input type="file" name="file"><br>
+		<input type="radio" name="access" value="public" checked="checked" />    Public
+		<input type="radio" name="access" value="private" /> Private<p>
+		<input type="submit" name="submit" value="Submit">
+		</form></body></html>"""
+		upload_url = blobstore.create_upload_url('/addfoto')
+		self.response.out.write(FORM_SUBIR_FOTO % {'url':upload_url})
+	
+	def post(self):
+		upload_files = self.get_uploads('file')
+		blob_info = upload_files[0] # guardo la imagen en el BlobStore
+		img = Image(user=self.session.get('usuariologeando'),public=self.request.get("access")=="public",blob_key=blob_info.key())
+		img.put() #guardo el objeto Image
+
+
+class AddFoto(blobstore_handlers.BlobstoreUploadHandler, session_module.BaseSessionHandler):
+	def get(self):
+		upload_url = blobstore.create_upload_url('/addfoto')
+		template_values = {'upload_url': upload_url}
+		template = JINJA_ENVIRONMENT.get_template('addfoto.html')
 		self.response.write(template.render(template_values))
 	
 	def post(self):
-		password=self.request.get('password')
-		email=self.request.get('email')
-		msgError = ""
-		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
-		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
-		errorVal = False
-
-		if not passRe.match(password):
-			errorVal = True
-		if not emailRe.match(email):
-			errorVal = True
-		
-		if not errorVal:
-			existe = Usuarios.query(Usuarios.email==email,Usuarios.name==password,).count()
-			if (existe==1):
-				msgError = "LOGUEADOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
-			else:
-				errorVal = True
-				msgError = "El inicio de sesion ha fallado. Hay elementos incorrectos"
+		if "public"==self.request.get('access'):
+			publicFot = True
 		else:
-			msgError = "El inicio de sesion ha fallado. Hay elementos incorrectos"
+			publicFot = False
+		msgProcesoImagen = ""
+		if self.session.get('usuariologeando'):
+			if self.session.get('registrado'):
+				registrado = self.session.get('registrado')
+				if registrado == "1":
+					upload_files = self.get_uploads('imagen')
+					blob_info = upload_files[0] # guardo la imagen en el BlobStore
 
-		template_values = { 'idioma': 'es',
-							'password': password,
-							'email': email,
-						   'msgRellene': 'Rellene los campos, por favor:',
-						   'msgPass': 'Password',
-						   'msgEmail': 'Email',
-						   'msgButEnviar': 'Enviar',
-						  'msgError': msgError}
-		template = JINJA_ENVIRONMENT.get_template('login.html')
+					
+					#avatar = self.request.get('imagen')
+					imagen = Image()
+					imagen.user = self.session.get('usuariologeando')
+					imagen.public = publicFot
+					imagen.blob_key = blob_info.key()
+					imagen.put()
+					
+					#try:
+					#	avatar = self.get_uploads('imagen')
+					#	blob_info = avatar[0] # guardo la imagen en el BlobStore
+					#	img = Image(user=self.session.get('usuariologeando'),
+					#				public=self.request.get("access")=="public",
+					#				blob_key=blob_info.key())
+					#	img.put() #guardo el objeto Image
+					#except:
+					#	count = 0
+					msgProcesoImagen = "Imagen almacenada correctamente" + self.request.get('acces')
+				else:
+					msgProcesoImagen = "Lo siento, no se encuentra logueado. No podra subir ninguna foto!"
+			else:
+				msgProcesoImagen = "Lo siento, no se encuentra logueado. No podra subir ninguna foto!"
+		else:
+			msgProcesoImagen = "Lo siento, no se encuentra logueado. No podra subir ninguna foto!"
+		
+		template_values = { 'msgProcesoImagen': msgProcesoImagen}
+		template = JINJA_ENVIRONMENT.get_template('addfoto.html')
 		self.response.write(template.render(template_values))
+
+class VerFotos(session_module.BaseSessionHandler):
+	def get(self):
+		versolopublicas = True
+		if self.session.get('registrado'):
+			registrado = self.session.get('registrado')
+			if registrado == "1":
+				versolopublicas = False
+		
+		fotos= blobstore.BlobInfo.all()
+		if versolopublicas:
+			for foto in fotos:
+				existeUsuario = Image.query(Image.public==True,Image.blob_key==foto.key()).count()
+				if existeUsuario==1:
+					self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+		else:
+			for foto in fotos:
+				existeUsuario = Image.query(Image.public==True,Image.blob_key==foto.key()).count()
+				if existeUsuario==1:
+					self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+				else:
+					existeUsuario = Image.query(Image.public==False,Image.user==self.session.get('usuariologeando')).count()
+					if existeUsuario==1:
+						self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+		
+		template_values = {}
+		template = JINJA_ENVIRONMENT.get_template('listafotos.html')
+		self.response.write(template.render(template_values))
+
+class ServeHandler(blobstore_handlers.BlobstoreDownloadHandler):
+	def get(self, resource):
+		resource = str(urllib.unquote(resource))
+		blob_info = blobstore.BlobInfo.get(resource)
+		self.send_blob(blob_info)
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
@@ -664,5 +773,7 @@ app = webapp2.WSGIApplication([
 		('/registroes2', RegistrarseEs2),
 		('/login', Login),
 		('/logout', Logout),
-		('/sss', ValidarEmail),
-], debug=True)
+		('/addfoto', AddFoto),
+		('/verfotos', VerFotos),
+		('/serve/([^/]+)?', ServeHandler),
+], config=session_module.config, debug=True)

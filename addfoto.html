@@ -1,0 +1,43 @@
+<html lang="es">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="/">EUS</a>
+					<a href="/es">ES</a>
+					<a href="/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<h3>Indique la foto que quiere subir</h3>
+					<form action="{{upload_url}}" method="post" id="" name="" onsubmit="" enctype="multipart/form-data">
+						<div class="linea_formulario">
+							<label for="imagen" class="label">{{msgAvatar}}</label>
+							<input id="imagen" name="imagen" type="file" alt="Insertar foto"/>
+						</div>
+						<div class="linea_formulario">
+							<input type="radio" name="access" value="public" checked="checked"/>Public
+    						<input type="radio" name="access" value="private" /> Private<p>
+						</div>
+						<div class="linea_formulario" style="margin-right: 10px; margin-right: 150px;" >
+							<br><input name="" type="submit" value="Subir foto"/>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

@@ -4,8 +4,8 @@ from webapp2_extras import sessions
 
 #This is needed to configure the session secret key
 #Runs first in the whole application
-myconfig_dict = {}
-myconfig_dict['webapp2_extras.sessions'] = {
+config = {}
+config['webapp2_extras.sessions'] = {
 	'secret_key': 'my-super-secret-key-somemorearbitarythingstosay',
 }
 
