@@ -1,43 +1,75 @@
 <html lang="es">
 	<script src="https://apis.google.com/js/platform.js" async defer></script>
-	<meta name="google-signin-client_id" content="537863468230-abuu185qfooeqvjr8aoll7aggfflts62.apps.googleusercontent.com">
-	<div class="g-signin2"
-		 data-onsuccess="onSignIn"
-		 data-onfailure="onSignInFailure">
-	</div>
-	<div class="fb-like"
-		 data-share="true"
-		 data-width="450"
-		 data-show-faces="true">
-	</div>
-	<script>
-		// Google Sign-in (new)
-		function onSignInFailure(googleUser) {
-			// Código para tratar un acceso erróneo
-		}
-		function onSignIn(googleUser) {
-			// Si el login es correcto ...
-			var profile = googleUser.getBasicProfile();
-			alert('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-			alert('Name: ' + profile.getName());
-			alert('Image URL: ' + profile.getImageUrl());
-			alert('Email: ' + profile.getEmail());
-		}
-	</script>
-	<script>
-		window.fbAsyncInit = function() {
-			FB.init({
-				appId      : '604685369718715',
-				xfbml      : true,
-				version    : 'v2.8'
+	<meta name="google-signin-client_id" content="508271159009-g97r75095lu4kth0e20rmbj6065qb3g9.apps.googleusercontent.com">
+	<head>
+		<link rel="stylesheet" type="text/css" href="styles/estilos.css">
+		<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+		<script src="js/jquery.validate.js"></script>
+		<meta name="viewport" content="initial-scale=1.0">
+		<meta charset="utf-8"/>
+		<title>DSSW Urko - Master SIA</title>
+	</head>
+	<body>
+		<div id="contenedor">
+			<div id="cabecera">
+				<div id="titulo">
+					<h1>DSSW - Tareas</h1>
+				</div>
+				<div id="idomas">
+					<nav>
+					<a href="/">EUS</a>
+					<a href="/es">ES</a>
+					<a href="/en">EN</a>
+					</nav>
+				</div>
+			</div>
+			<div id="contenido">
+				<div id="menu">
+				</div>
+				<div id="principal">
+					<div class="g-signin2"
+						 data-onsuccess="onSignIn"
+						 data-onfailure="onSignInFailure">
+					</div>
+					<div id="usergmail" style="visibility: hidden;">
+						<label id="id" for="id" class="label" style="float: none;"></label></br>
+						<label id="name" for="name" class="label" style="float: none;"></label></br>
+						<label id="imgurl" for="imgurl" class="label" style="float: none;"></label></br>
+						<label id="email" for="email" class="label" style="float: none;"></label>
+					</div>
+					</br></br></br>
+				</div>
+			</div>
+		</div>
+		<script>
+			// Google Sign-in (new)
+			function onSignInFailure(googleUser) {
+				alert('Ha ocurrido un erro durante la autenticacion');
+			}
+			function onSignIn(googleUser) {
+				// Si el login es correcto ...
+				var profile = googleUser.getBasicProfile();
+				document.getElementById("usergmail").style.visibility = "visible";
+				document.getElementById('id').innerHTML = 'ID: ' + profile.getId();
+				document.getElementById('name').innerHTML = 'Name: ' + profile.getName();
+				document.getElementById('imgurl').innerHTML = ('Image URL: ' + profile.getImageUrl());
+				document.getElementById('email').innerHTML = ('Email: ' + profile.getEmail());
+			}
+		</script>
+		<script>
+			// Cuando la pagina carga miramos si ya hay un usuario identificado.
+			fb.ready(function(){ 
+				if (fb.logged){
+					// Cambiamos el link de identificarse por el nombre y la foto del usuario.
+					html = "<p>Hola " + fb.user.name + "</p>";
+					html += '<p><img src="' + fb.user.picture + '"/></p>';
+					html += '<p><a href="#" onclick="fb.logout(); return false;">Salir</a></p>';
+					document.getElementById("conectar_facebook").innerHTML = html;
+				}
 			});
-		};
-		(function(d, s, id){
-			var js, fjs = d.getElementsByTagName(s)[0];
-			if (d.getElementById(id)) {return;}
-			js = d.createElement(s); js.id = id;
-			js.src = "//connect.facebook.net/en_US/sdk.js";
-			fjs.parentNode.insertBefore(js, fjs);
-		}(document, 'script', 'facebook-jssdk'));
+			
+			
+			
 	</script>
+	</body>
 </html>

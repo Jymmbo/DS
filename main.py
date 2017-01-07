@@ -17,6 +17,7 @@
 import os
 import urllib
 import re
+import hashlib, uuid
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
@@ -26,6 +27,10 @@ from base64 import b64encode
 import json
 import jinja2
 import webapp2
+
+from webapp2_extras import sessions
+import session_module
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -441,6 +446,205 @@ class Autenticacion(webapp2.RequestHandler):
 		template = JINJA_ENVIRONMENT.get_template('autenticacion.html')
 		self.response.write(template.render(template_values))
 
+#TAREA 6
+class Usuarios(ndb.Model):
+	name = ndb.StringProperty(required=True)
+	email = ndb.StringProperty(required=True)
+	password = ndb.StringProperty(required=True)
+	salero = ndb.StringProperty(required=True)
+	date=ndb.DateTimeProperty(auto_now_add=True)
+
+class Image(ndb.Model):
+	user = ndb.StringProperty()
+	public = ndb.BooleanProperty()
+	blob_key = ndb.BlobKeyProperty()
+
+#session_module.BaseSessionHandler
+class AccesoLogin(webapp2.RequestHandler):
+	def get(self):
+		template_values = {}
+		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
+		self.response.write(template.render(template_values))
+
+class ValidarEmail2(webapp2.RequestHandler):
+	def get(self):
+		codigoValidacion = ""
+		email = self.request.get('email')
+		nusersemail = Usuarios.query(Usuarios.email==email).count()
+		if (nusersemail==1):
+			codigoValidacion = "0"
+		else:
+			codigoValidacion = "1"
+		
+		self.response.out.write("%s" %(codigoValidacion))
+
+class RegistrarseEs2(webapp2.RequestHandler):
+	def get(self):
+		template_values = { 'idioma': 'es',
+						   'msgRellene': 'Rellene los campos, por favor:'}
+		template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
+		self.response.write(template.render(template_values))
+	
+	def post(self):
+		nombre=self.request.get('username')
+		password=self.request.get('password')
+		passwordRep=self.request.get('passwordrep')
+		email=self.request.get('email')
+		msgUserError = ""
+		msgPassError = ""
+		msgPass2Error = ""
+		msgEmailError = ""
+		msgCorrectoAlmacenado = ""
+		USERRE = re.compile(r"^[a-zA-Z0-9]+([a-zA-Z0-9](_|-| )[a-zA-Z0-9])*[a-zA-Z0-9]+$")
+		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
+		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
+		errorVal = False
+
+		if not USERRE.match(nombre):
+			msgUserError = "Nombre de usuario incorrecto"
+			errorVal = True
+		if not passRe.match(password):
+			msgPassError = "El password no es correcto"
+			errorVal = True
+		if not password == passwordRep:
+			msgPass2Error = "Los passwords no coinciden"
+			errorVal = True
+		if not emailRe.match(email):
+			msgEmailError = "Email incorrecto"
+			errorVal = True
+		
+		if not errorVal:
+			nusersnombre = Usuarios.query(Usuarios.name==nombre).count()
+			nusersemail = Usuarios.query(Usuarios.email==email).count()
+			if (nusersnombre==1):
+				msgUserError = "Ya existe un usuario con ese nombre"
+			elif (nusersemail==1):
+				msgEmailError = "Ya existe un usuario con ese email"
+			else:
+				datos = Usuarios()
+				datos.name = nombre
+				salt = uuid.uuid4().hex
+				datos.salero = salt
+				hashed_password = hashlib.sha512(password + salt).hexdigest()
+				datos.password = hashed_password
+				datos.email = email
+				datos.put()
+				msgCorrectoAlmacenado = "FELICIDADES! "  + nombre + ", tu usuario se ha guardado correctamente"
+
+		template_values = { 'idioma': 'es',
+							'username': nombre,
+							'password': password,
+							'passwordRep': passwordRep,
+							'email': email,
+						   'msgRellene': 'Rellene los campos, por favor:',
+						   'msgNomUser': 'Nombre de usuario',
+						   'msgPass': 'Password',
+						   'msgPassRep': 'Repetir password',
+						   'msgEmail': 'Email',
+						   'msgButEnviar': 'Enviar',
+						   'msgHola': 'Hola',
+						  'msgDatosOK': 'Tus datos son correctos',
+						  'msgNomUserE': msgUserError,
+						  'msgPassE': msgPassError,
+						   'msgPassRepE': msgPass2Error,
+						   'msgEmailE': msgEmailError,
+						   'msgCorrectoAlmacenado': msgCorrectoAlmacenado}
+		template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
+		self.response.write(template.render(template_values))
+
+class Login(webapp2.RequestHandler):
+	def get(self):
+		template_values = { 'idioma': 'es',
+						   'msgRellene': 'Rellene los campos, por favor:'}
+		template = JINJA_ENVIRONMENT.get_template('login.html')
+		self.response.write(template.render(template_values))
+	
+	def post(self):
+		password=self.request.get('password')
+		email=self.request.get('email')
+		msgError = ""
+		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
+		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
+		errorVal = False
+
+		if not passRe.match(password):
+			errorVal = True
+		if not emailRe.match(email):
+			errorVal = True
+		
+		if not errorVal:
+			existeUsuario = Usuarios.query(Usuarios.email==email).count()
+			if (existeUsuario==1):
+				users = Usuarios.query(Usuarios.email==email)
+				for user in users:
+					salt = user.salero
+					pass_bbdd = user.password
+				
+				pass_login = hashlib.sha512(password + salt).hexdigest()
+				if not pass_bbdd==pass_login:
+					errorVal = True
+					#msgError = "3 " + pass_bbdd + "-----" + pass_login + "-----" + password + "-----" + salt
+			else:
+				errorVal = True
+			
+
+		if not errorVal:
+			msgError = "LOGUEADOooooooooooooooooooooooooooooooo"
+		else:
+			msgError = msgError + " El inicio de sesion ha fallado. Hay elementos incorrectos"
+			
+		template_values = { 'idioma': 'es',
+							'password': password,
+							'email': email,
+						   'msgRellene': 'Rellene los campos, por favor:',
+						   'msgPass': 'Password',
+						   'msgEmail': 'Email',
+						   'msgButEnviar': 'Enviar',
+						  'msgError': msgError}
+		template = JINJA_ENVIRONMENT.get_template('login.html')
+		self.response.write(template.render(template_values))
+
+class Logout(webapp2.RequestHandler):
+	def get(self):
+		template_values = { 'idioma': 'es',
+						   'msgRellene': 'Rellene los campos, por favor:'}
+		template = JINJA_ENVIRONMENT.get_template('login.html')
+		self.response.write(template.render(template_values))
+	
+	def post(self):
+		password=self.request.get('password')
+		email=self.request.get('email')
+		msgError = ""
+		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
+		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
+		errorVal = False
+
+		if not passRe.match(password):
+			errorVal = True
+		if not emailRe.match(email):
+			errorVal = True
+		
+		if not errorVal:
+			existe = Usuarios.query(Usuarios.email==email,Usuarios.name==password,).count()
+			if (existe==1):
+				msgError = "LOGUEADOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+			else:
+				errorVal = True
+				msgError = "El inicio de sesion ha fallado. Hay elementos incorrectos"
+		else:
+			msgError = "El inicio de sesion ha fallado. Hay elementos incorrectos"
+
+		template_values = { 'idioma': 'es',
+							'password': password,
+							'email': email,
+						   'msgRellene': 'Rellene los campos, por favor:',
+						   'msgPass': 'Password',
+						   'msgEmail': 'Email',
+						   'msgButEnviar': 'Enviar',
+						  'msgError': msgError}
+		template = JINJA_ENVIRONMENT.get_template('login.html')
+		self.response.write(template.render(template_values))
+
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
 		('/es', MainHandlerEs),
@@ -455,6 +659,10 @@ app = webapp2.WSGIApplication([
 		('/datos', Geolocalizacion),
 		('/mapa', Mostrarmapa),
 		('/autenticacion', Autenticacion),
-		('/accesologin', ValidarEmail),
+		('/accesologin', AccesoLogin),
+		('/validaremail2', ValidarEmail2),
+		('/registroes2', RegistrarseEs2),
+		('/login', Login),
+		('/logout', Logout),
 		('/sss', ValidarEmail),
 ], debug=True)

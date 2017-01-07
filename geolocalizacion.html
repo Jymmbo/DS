@@ -45,18 +45,17 @@
 						data: "dir="+direccion,
 						beforeSend:function(){
 							document.getElementById("direccionError").style.visibility = "visible";
-							document.getElementById('direccionError').innerHTML = "Validando direccion...";
+							document.getElementById('direccionError').innerHTML = "Procesando...";
 							document.getElementById('direccionError').style.color = "black";
 						},
 						"success": function(result) {
-							document.getElementById("direccionError").style.visibility = "visible";
+							document.getElementById("direccionError").style.visibility = "hidden";
 							var res = result.split(",");
 							initMap(res[0], res[1]);
-							document.getElementById('direccionError').style.color = "green";
 						},
 						"error": function(result) {
 							document.getElementById("direccionError").style.visibility = "visible";
-							document.getElementById('direccionError').innerHTML = "Ha ocurrido un error durante el proceso de obtencion de coordenadas";
+							document.getElementById('direccionError').innerHTML = "No se han obtenido coordenadas para la direccion indicada";
 							document.getElementById('direccionError').style.color = "red";},
 						"async": true,})
 				}else{
@@ -69,11 +68,15 @@
 		<script>
 			var map;
 			function initMap(lat, lng) {
-				if(lat != null && lat.length != 0 && lng != null && lng.length != 0){	
+				if(lat != null && lat.length != 0 && lng != null && lng.length != 0){
+					latitud = (lat.substr(0,lat.indexOf(".") + 4));
+					longitud = (lng.substr(0,lng.indexOf(".") + 4));
+					var latF = parseFloat(latitud);
+					var lngF = parseFloat(longitud);
 					document.getElementById("map").style.visibility = "visible";
 					map = new google.maps.Map(document.getElementById('map'), {
-						center: {lat: lat, lng: lng},
-						zoom: 8
+						center: {lat: latF, lng: lngF},
+						zoom: 10
 					});
 				}else{
 					document.getElementById("map").style.visibility = "hidden";
