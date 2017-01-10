@@ -35,7 +35,6 @@ import webapp2
 from webapp2_extras import sessions
 import session_module
 
-
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     extensions=['jinja2.ext.autoescape'],
@@ -442,6 +441,7 @@ class Mostrarmapa(webapp2.RequestHandler):
 		lat = js['results'][0]['geometry']['location']['lat']
 		lng = js['results'][0]['geometry']['location']['lng']
 		
+		#self.response.out.write("%s" %js)
 		self.response.out.write("%s,%s"%(lat,lng))
 
 class Autenticacion(webapp2.RequestHandler):
@@ -487,7 +487,7 @@ class ValidarEmail2(webapp2.RequestHandler):
 		
 		self.response.out.write("%s" %(codigoValidacion))
 
-class RegistrarseEs2(webapp2.RequestHandler):
+class RegistrarseEs2(session_module.BaseSessionHandler):
 	def get(self):
 		template_values = { 'idioma': 'es',
 						   'msgRellene': 'Rellene los campos, por favor:'}
@@ -503,12 +503,19 @@ class RegistrarseEs2(webapp2.RequestHandler):
 		msgPassError = ""
 		msgPass2Error = ""
 		msgEmailError = ""
-		msgCorrectoAlmacenado = ""
+		msgCorrecto = ""
 		USERRE = re.compile(r"^[a-zA-Z0-9]+([a-zA-Z0-9](_|-| )[a-zA-Z0-9])*[a-zA-Z0-9]+$")
 		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
 		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
 		errorVal = False
+		registradoYa = False
 
+		if self.session.get('registrado'):
+			registrado = self.session.get('registrado')
+			if registrado == "1":
+				registradoYa = True
+				msgCorrecto = "Un usuario logueado no puede registrarse"
+		
 		if not USERRE.match(nombre):
 			msgUserError = "Nombre de usuario incorrecto"
 			errorVal = True
@@ -522,13 +529,15 @@ class RegistrarseEs2(webapp2.RequestHandler):
 			msgEmailError = "Email incorrecto"
 			errorVal = True
 		
-		if not errorVal:
+		if not errorVal and not registradoYa:
 			nusersnombre = Usuarios.query(Usuarios.name==nombre).count()
 			nusersemail = Usuarios.query(Usuarios.email==email).count()
 			if (nusersnombre==1):
 				msgUserError = "Ya existe un usuario con ese nombre"
+				errorVal = True
 			elif (nusersemail==1):
 				msgEmailError = "Ya existe un usuario con ese email"
+				errorVal = True
 			else:
 				datos = Usuarios()
 				datos.name = nombre
@@ -538,7 +547,7 @@ class RegistrarseEs2(webapp2.RequestHandler):
 				datos.password = hashed_password
 				datos.email = email
 				datos.put()
-				msgCorrectoAlmacenado = "FELICIDADES! "  + nombre + ", tu usuario se ha guardado correctamente"
+				msgCorrecto = "FELICIDADES! "  + nombre + ", tu usuario se ha registrado correctamente"
 
 		template_values = { 'idioma': 'es',
 							'username': nombre,
@@ -557,9 +566,13 @@ class RegistrarseEs2(webapp2.RequestHandler):
 						  'msgPassE': msgPassError,
 						   'msgPassRepE': msgPass2Error,
 						   'msgEmailE': msgEmailError,
-						   'msgCorrectoAlmacenado': msgCorrectoAlmacenado}
-		#template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
-		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
+						   'msgCorrecto': msgCorrecto,}
+		
+		if errorVal or registradoYa:
+			template = JINJA_ENVIRONMENT.get_template('registrotareaseis.html')
+		else:
+			template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
+		
 		self.response.write(template.render(template_values))
 
 class Login(session_module.BaseSessionHandler):
@@ -573,6 +586,7 @@ class Login(session_module.BaseSessionHandler):
 		password=self.request.get('password')
 		email=self.request.get('email')
 		msgError = ""
+		msgCorrecto = ""
 		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
 		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
 		errorVal = False
@@ -603,15 +617,18 @@ class Login(session_module.BaseSessionHandler):
 								intentos = self.session.get('intentos')
 								self.session['intentos'] = intentos + 1
 							else:
+								intentos = 1
 								self.session['intentos'] = 1
 						else:
 							self.session['usuariologeando'] = email
+							intentos = 1
 							self.session['intentos'] = 1
 					else:
 						self.session['usuariologeando'] = email
+						intentos = 1
 						self.session['intentos'] = 1
 					
-					if(intentos>=3):
+					if(intentos>2):
 						msgError = "Su cuenta ha sido bloqueada. No ha conseguido loguearse en tres ocasiones"
 						#Codigo de eliminar la cuenta
 						users = Usuarios.query(Usuarios.email==email)
@@ -620,15 +637,18 @@ class Login(session_module.BaseSessionHandler):
 				
 				else:
 					#Indicamos en session que esta registrado
+					self.session['usuariologeando'] = email
 					self.session['registrado'] = "1"
 			else:
 				errorVal = True
 
 		if not errorVal:
-			msgError = "LOGUEADOooooooooooooooooooooooooooooooo"
+			msgCorrecto = "LOGUEADO!"
 			template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		else:
-			msgError = msgError + " El inicio de sesion ha fallado. Hay elementos incorrectos"
+			template = JINJA_ENVIRONMENT.get_template('login.html')
+			if msgError == "":
+				msgError = msgError + " El inicio de sesion ha fallado. Hay elementos incorrectos"
 			template = JINJA_ENVIRONMENT.get_template('login.html')
 			
 		template_values = { 'idioma': 'es',
@@ -638,8 +658,8 @@ class Login(session_module.BaseSessionHandler):
 						   'msgPass': 'Password',
 						   'msgEmail': 'Email',
 						   'msgButEnviar': 'Enviar',
-						   'registrado': self.session.get('registrado'),
-						  'msgError': msgError}
+						   'msgError': msgError,
+						  'msgCorrecto': msgCorrecto}
 		#template = JINJA_ENVIRONMENT.get_template('login.html')
 		self.response.write(template.render(template_values))
 
@@ -647,7 +667,7 @@ class Logout(session_module.BaseSessionHandler):
 	def get(self):
 		del self.session['registrado']
 		del self.session['usuariologeando']
-		template_values = { }
+		template_values = {'msgCorrecto': "Sesion finalizada"}
 		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		self.response.write(template.render(template_values))
 
@@ -708,7 +728,7 @@ class AddFoto(blobstore_handlers.BlobstoreUploadHandler, session_module.BaseSess
 					#	img.put() #guardo el objeto Image
 					#except:
 					#	count = 0
-					msgProcesoImagen = "Imagen almacenada correctamente" + self.request.get('acces')
+					msgProcesoImagen = "Imagen almacenada correctamente: " + self.request.get('access')
 				else:
 					msgProcesoImagen = "Lo siento, no se encuentra logueado. No podra subir ninguna foto!"
 			else:
@@ -717,7 +737,7 @@ class AddFoto(blobstore_handlers.BlobstoreUploadHandler, session_module.BaseSess
 			msgProcesoImagen = "Lo siento, no se encuentra logueado. No podra subir ninguna foto!"
 		
 		template_values = { 'msgProcesoImagen': msgProcesoImagen}
-		template = JINJA_ENVIRONMENT.get_template('addfoto.html')
+		template = JINJA_ENVIRONMENT.get_template('addfotovolver.html')
 		self.response.write(template.render(template_values))
 
 class VerFotos(session_module.BaseSessionHandler):
@@ -733,16 +753,17 @@ class VerFotos(session_module.BaseSessionHandler):
 			for foto in fotos:
 				existeUsuario = Image.query(Image.public==True,Image.blob_key==foto.key()).count()
 				if existeUsuario==1:
-					self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+					self.response.out.write('<img src="serve/%s" height="200"></image></td>' %foto.key())
 		else:
 			for foto in fotos:
 				existeUsuario = Image.query(Image.public==True,Image.blob_key==foto.key()).count()
 				if existeUsuario==1:
-					self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+					self.response.out.write('<img src="serve/%s" height="200"></image></td>' %foto.key())
 				else:
-					existeUsuario = Image.query(Image.public==False,Image.user==self.session.get('usuariologeando')).count()
-					if existeUsuario==1:
-						self.response.out.write('<img src="serve/%s"></image></td>' %foto.key())
+					existeUsuario = Image.query(Image.public==False,Image.blob_key==foto.key(),
+												Image.user==str(self.session.get('usuariologeando'))).count()
+					if existeUsuario>=1:
+						self.response.out.write('<img src="serve/%s" height="200"></image></td>' %foto.key())
 		
 		template_values = {}
 		template = JINJA_ENVIRONMENT.get_template('listafotos.html')
@@ -776,4 +797,4 @@ app = webapp2.WSGIApplication([
 		('/addfoto', AddFoto),
 		('/verfotos', VerFotos),
 		('/serve/([^/]+)?', ServeHandler),
-], config=session_module.config, debug=True)
+], config=session_module.config, debug=True,)

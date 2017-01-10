@@ -58,6 +58,7 @@
 							<h3><label id="txtkaixo">{{msgCorrectoAlmacenado}}</label></h3>
 						</div>
 					</form>
+					<a href="/accesologin">Volver</a>
 				</div>
 			</div>
 		</div>
@@ -109,7 +110,7 @@
 					document.getElementById('usernameError').innerHTML = "Nombre de usuario incorrecto";
 					valorReturn = false;
   				}else{
-					document.getElementById("usernameError").style.visibility = "hidden";
+					document.getElementById("usernameError").innerHTML = "";
 				}
   				if (password == null || password.length =< 5){
     				document.getElementById("passwordError").style.visibility = "visible";
@@ -130,7 +131,7 @@
 					document.getElementById('emailError').innerHTML = "Email incorrecto";
 					valorReturn = false;
 				}else{
-					document.getElementById("emailError").style.visibility = "hidden";
+					document.getElementById('emailError').innerHTML = "";
 				}
 				return valorReturn;
 			}
