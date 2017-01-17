@@ -455,6 +455,7 @@ class Usuarios(ndb.Model):
 	name = ndb.StringProperty(required=True)
 	email = ndb.StringProperty(required=True)
 	password = ndb.StringProperty(required=True)
+	activo = ndb.BooleanProperty()
 	salero = ndb.StringProperty(required=True)
 	date=ndb.DateTimeProperty(auto_now_add=True)
 
@@ -546,6 +547,7 @@ class RegistrarseEs2(session_module.BaseSessionHandler):
 				hashed_password = hashlib.sha512(password + salt).hexdigest()
 				datos.password = hashed_password
 				datos.email = email
+				datos.activo = True
 				datos.put()
 				msgCorrecto = "FELICIDADES! "  + nombre + ", tu usuario se ha registrado correctamente"
 
@@ -590,6 +592,7 @@ class Login(session_module.BaseSessionHandler):
 		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
 		emailRe = re.compile(r"^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$")
 		errorVal = False
+		registrado = "0"
 
 		if not passRe.match(password):
 			errorVal = True
@@ -597,7 +600,7 @@ class Login(session_module.BaseSessionHandler):
 			errorVal = True
 		
 		if not errorVal:
-			existeUsuario = Usuarios.query(Usuarios.email==email).count()
+			existeUsuario = Usuarios.query(Usuarios.email==email, Usuarios.activo==True).count()
 			if (existeUsuario==1):
 				users = Usuarios.query(Usuarios.email==email)
 				for user in users:
@@ -630,15 +633,17 @@ class Login(session_module.BaseSessionHandler):
 					
 					if(intentos>2):
 						msgError = "Su cuenta ha sido bloqueada. No ha conseguido loguearse en tres ocasiones"
-						#Codigo de eliminar la cuenta
+						#Codigo de bloqueo de la cuenta del usuario -> modificar el estado del usuario, activo=False
 						users = Usuarios.query(Usuarios.email==email)
 						for l in users.fetch(limit = 1):
-							l.key.delete()
+							l.activo = False
+							l.put()
 				
 				else:
 					#Indicamos en session que esta registrado
 					self.session['usuariologeando'] = email
-					self.session['registrado'] = "1"
+					registrado = "1"
+					self.session['registrado'] = registrado
 			else:
 				errorVal = True
 
@@ -659,7 +664,8 @@ class Login(session_module.BaseSessionHandler):
 						   'msgEmail': 'Email',
 						   'msgButEnviar': 'Enviar',
 						   'msgError': msgError,
-						  'msgCorrecto': msgCorrecto}
+						  'msgCorrecto': msgCorrecto,
+						  'registrado': registrado}
 		#template = JINJA_ENVIRONMENT.get_template('login.html')
 		self.response.write(template.render(template_values))
 
