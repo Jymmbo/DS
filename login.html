@@ -26,18 +26,19 @@
 				</div>
 				<div id="principal">
 					<h3>{{msgRellene}}</h3>
-					<form action="/login" method="post" id="" name="" onsubmit="">
+					<form action="/login" method="post" id="login_form" name="login_form" onsubmit="" autocomplete=”off”>
 						<div class="linea_formulario">
 							<label for="password" class="label">Password:</label>
-							<input id="password" name="password" class="input" type="password" value="{{password}}"/>
+							<input id="password" name="password" class="input" type="password" value="{{password}}" onkeypress="checkEnter(event)"/>
 							<label id="passwordError" class="label_error" style="visibility: visible; color:red">{{msgPassE}}</label>
 						</div>
 						<div class="linea_formulario">
 							<label for="email" class="label">Email:</label>
-							<input id="email" name="email" class="input" type="text" value="{{email}}" />
+							<input id="email" name="email" class="input" type="text" value="{{email}}" onkeypress="checkEnter(event)"/>
 							<label id="emailError" class="label_error" style="visibility: hidden; color:red">{{msgEmailE}}</label>
 						</div>
 						<div class="linea_formulario" style="margin-right: 150px;">
+							<!--<br><input name="login_button" type="button" value="Aceptar" id="login_button"/>-->
 							<br><input name="" type="submit" value="Aceptar"/>
 						</div>
 						<div id="msgError" class="linea_formulario">
@@ -48,5 +49,23 @@
 				</div>
 			</div>
 		</div>
+		<script type="text/javascript">
+			Event.observe(window, 'load', function(){
+				Event.observe( 'login_button', 'click', formProcess);
+			});
+			function formProcess(){
+				alert("dd");
+				$('login_form').submit();
+			}
+			function checkEnter(e){
+				var codigoCaracter = (e && e.which) ? e.which : event.keyCode;
+				if(codigoCaracter == 13) {
+					formProcess();
+				}
+				else {
+					return true;
+				}
+			}
+    	</script>
 	</body>
 </html>

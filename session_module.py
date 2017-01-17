@@ -6,7 +6,7 @@ from webapp2_extras import sessions
 #Runs first in the whole application
 config = {}
 config['webapp2_extras.sessions'] = {
-	'secret_key': 'my-super-secret-key-somemorearbitarythingstosay',
+	'secret_key': 'my-super-secret-key-somemorearbitarythingstosay'
 }
 
 #Session Handling class, gets the store, dispatches the request

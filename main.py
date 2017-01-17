@@ -781,6 +781,131 @@ class ServeHandler(blobstore_handlers.BlobstoreDownloadHandler):
 		blob_info = blobstore.BlobInfo.get(resource)
 		self.send_blob(blob_info)
 
+class ModificarUsuario(session_module.BaseSessionHandler):
+	def get(self):
+		msg = ""
+		usuariolog = ""
+		usuarioname = ""
+		#Lo primero, cargamos los datos de usuario
+		if self.session.get('usuariologeando'):
+			usuariolog = self.session.get('usuariologeando')
+			existeUsuario = Usuarios.query(Usuarios.email==usuariolog, Usuarios.activo==True).count()
+			if (existeUsuario==1):
+				users = Usuarios.query(Usuarios.email==usuariolog)
+				for user in users:
+					usuarioname = user.name
+			else:
+				msg = "Ha ocurrido un error. Usted no puede modificar los datos"
+		else:
+			msg = "Ha ocurrido un error. Usted no se encuentra logueado"
+		
+		template_values = {'msg': msg,
+						  'username': usuarioname,
+						  'email': usuariolog,
+						  'msgRellene': 'Rellene los campos, por favor:'}
+		template = JINJA_ENVIRONMENT.get_template('modificarusuario.html')
+		self.response.write(template.render(template_values))			
+	
+	def post(self):
+		nombre=self.request.get('username')
+		passwordAntiguo=self.request.get('passwordAntiguo')
+		password=self.request.get('password')
+		passwordRep=self.request.get('passwordrep')
+		email=self.request.get('email')
+		msgUserError = ""
+		msgPassAntiguoError = ""
+		msgPassError = ""
+		msgPass2Error = ""
+		msgEmailError = ""
+		msgCorrecto = ""
+		msg = ""
+		USERRE = re.compile(r"^[a-zA-Z0-9]+([a-zA-Z0-9](_|-| )[a-zA-Z0-9])*[a-zA-Z0-9]+$")
+		passRe = re.compile(r"([a-zA-Z0-9]{6,20})$")
+		errorVal = False
+		registrado = "0"
+		
+		if not USERRE.match(nombre):
+			msgUserError = "Nombre de usuario incorrecto"
+			errorVal = True
+		if not passRe.match(passwordAntiguo):
+			msgPassAntiguoError = "El password no es correcto"
+			errorVal = True
+		if not passRe.match(password):
+			msgPassError = "El nuevo password no es correcto"
+			errorVal = True
+		if not password == passwordRep:
+			msgPass2Error = "Los passwords no coinciden"
+			errorVal = True
+
+		if not errorVal:
+			nusersnombre = Usuarios.query(Usuarios.name==nombre, Usuarios.email!=email).count()
+			if (nusersnombre==1):
+				msgUserError = "Ya existe un usuario con ese nombre"
+				errorVal = True
+			else:
+				existeUsuario = Usuarios.query(Usuarios.email==email, Usuarios.activo==True).count()
+				if (existeUsuario==1):
+					users = Usuarios.query(Usuarios.email==email)
+					for user in users:
+						salt = user.salero
+						pass_bbdd = user.password
+					
+					pass_antiguo = hashlib.sha512(passwordAntiguo + salt).hexdigest()
+					pass_nuevo = hashlib.sha512(password + salt).hexdigest()
+					if not pass_bbdd==pass_antiguo:
+						msgPassAntiguoError = "El password antiguo es distinto al almacenado"
+						errorVal = True
+					elif pass_nuevo==pass_antiguo:
+						msgPassError = "El password nuevo coincide con el antiguo"
+						errorVal = True
+					else:
+						#Aqui hago el update
+						users = Usuarios.query(Usuarios.email==email)
+						for l in users.fetch(limit = 1):
+							l.name = nombre
+							salt = uuid.uuid4().hex
+							l.salero = salt
+							hashed_password = hashlib.sha512(password + salt).hexdigest()
+							l.password = hashed_password
+							l.put()
+							self.session['usuariologeando'] = email
+							registrado = "1"
+							self.session['registrado'] = registrado
+							msgCorrecto = "FELICIDADES! "  + nombre + ", tus datos han sido modificados correctamente"
+				else:
+					msgUserError = "Ha ocurrido un error. Usted no puede modificar sus datos"
+					errorVal = True
+
+		template_values = { 'idioma': 'es',
+							'username': nombre,
+						   'passwordAntiguo': passwordAntiguo,
+							'password': password,
+							'passwordRep': passwordRep,
+							'email': email,
+						   'msgRellene': 'Rellene los campos, por favor:',
+						   'msgNomUser': 'Nombre de usuario',
+						   'msgPass': 'Password',
+						   'msgPassRep': 'Repetir password',
+						   'msgEmail': 'Email',
+						   'msgButEnviar': 'Enviar',
+						   'msgHola': 'Hola',
+						  'msgDatosOK': 'Tus datos son correctos',
+						  'msgNomUserE': msgUserError,
+						  'msgPassE': msgPassError,
+						   'msgPassRepE': msgPass2Error,
+						   'msgPassAntiguoError': msgPassAntiguoError,
+						   'msgCorrecto': msgCorrecto,
+						  'registrado': registrado}
+		
+		if errorVal:
+			template = JINJA_ENVIRONMENT.get_template('modificarusuario.html')
+		else:
+			template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
+		
+		self.response.write(template.render(template_values))
+		
+
+
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
 		('/es', MainHandlerEs),
@@ -803,4 +928,5 @@ app = webapp2.WSGIApplication([
 		('/addfoto', AddFoto),
 		('/verfotos', VerFotos),
 		('/serve/([^/]+)?', ServeHandler),
+		('/modificarusuario', ModificarUsuario),
 ], config=session_module.config, debug=True,)
