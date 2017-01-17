@@ -6,7 +6,9 @@ from webapp2_extras import sessions
 #Runs first in the whole application
 config = {}
 config['webapp2_extras.sessions'] = {
-	'secret_key': 'my-super-secret-key-somemorearbitarythingstosay'
+	'cookie_args': {'max_age': None, 'domain': None, 'secure': None, 'httponly': False, 'path': '/'},
+	'secret_key': 'my-super-secret-key-somemorearbitarythingstosay',
+	'session_max_age': 180
 }
 
 #Session Handling class, gets the store, dispatches the request

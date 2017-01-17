@@ -28,6 +28,11 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp import blobstore_handlers
 from base64 import b64encode
 
+
+#from urkolarraapppiedra.token import generate_confirmation_token, confirm_token
+#import datetime
+
+
 import json
 import jinja2
 import webapp2
@@ -671,8 +676,10 @@ class Login(session_module.BaseSessionHandler):
 
 class Logout(session_module.BaseSessionHandler):
 	def get(self):
-		del self.session['registrado']
-		del self.session['usuariologeando']
+		if self.session.get('registrado'):
+			del self.session['registrado']
+		if self.session.get('usuariologeando'):
+			del self.session['usuariologeando']
 		template_values = {'msgCorrecto': "Sesion finalizada"}
 		template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		self.response.write(template.render(template_values))
@@ -872,6 +879,8 @@ class ModificarUsuario(session_module.BaseSessionHandler):
 							registrado = "1"
 							self.session['registrado'] = registrado
 							msgCorrecto = "FELICIDADES! "  + nombre + ", tus datos han sido modificados correctamente"
+							#token = generate_confirmation_token(email)
+
 				else:
 					msgUserError = "Ha ocurrido un error. Usted no puede modificar sus datos"
 					errorVal = True
@@ -903,7 +912,24 @@ class ModificarUsuario(session_module.BaseSessionHandler):
 			template = JINJA_ENVIRONMENT.get_template('tareaseis.html')
 		
 		self.response.write(template.render(template_values))
-		
+
+#@user_blueprint.route('/confirm/<token>')
+#@login_required
+#def confirm_email(token):
+#	try:
+#		email = confirm_token(token)
+#	except:
+#		flash('The confirmation link is invalid or has expired.', 'danger')
+#	user = User.query.filter_by(email=email).first_or_404()
+#	if user.confirmed:
+#		flash('Account already confirmed. Please login.', 'success')
+#	else:
+#		user.confirmed = True
+#		user.confirmed_on = datetime.datetime.now()
+#		db.session.add(user)
+#		db.session.commit()
+#		flash('You have confirmed your account. Thanks!', 'success')
+#	return redirect(url_for('main.home'))
 
 
 app = webapp2.WSGIApplication([
